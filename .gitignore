@@ -1,0 +1,10 @@
+dist/
+node_modules/
+.vercel/
+.env*
+!.env.example
+qa/
+.DS_Store
+
+entrega/
+assets/products/*-original.png

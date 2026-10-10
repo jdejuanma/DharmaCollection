@@ -1,0 +1,46 @@
+{
+  "brand": "Dharma",
+  "whatsapp": "595982102453",
+  "instagram": "https://www.instagram.com/dharmacollectionpy/",
+  "facebook": "https://www.facebook.com/share/1KLBAbKqbX/",
+  "siteUrl": "",
+  "updatedAt": "2026-10-06",
+  "products": [
+    {
+      "id": "world-spinner",
+      "name": "Cinturón World Spinner",
+      "category": "Cinturones WWE",
+      "description": "Diseño estilo WWE con detalles brillantes y ajuste regulable. Una pieza para tu colección, tu setup o un regalo especial.",
+      "price": 399000,
+      "size": "Pequeña",
+      "variant": "Modelo único",
+      "stock": 1,
+      "onRequest": true,
+      "image": "assets/products/world-spinner.webp",
+      "imageAlt": "Cinturón World Spinner negro con placas doradas y plateadas sobre fondo blanco",
+      "features": [
+        "Diseño detallado y brillante",
+        "Ajustable · talla pequeña",
+        "Para colección, decoración y fotos"
+      ]
+    },
+    {
+      "id": "peso-pesado-championship",
+      "name": "Cinturón Peso Pesado Championship",
+      "category": "Cinturones WWE",
+      "description": "Diseño clásico de peso pesado, con detalles dorados y ajuste regulable. Ideal para exhibir, coleccionar o regalar a un fan.",
+      "price": 399000,
+      "size": "Pequeña",
+      "variant": "Modelo único",
+      "stock": 0,
+      "onRequest": true,
+      "image": "assets/products/peso-pesado.webp",
+      "imageAlt": "Cinturón Peso Pesado Championship negro con placa dorada y detalles rojos sobre fondo blanco",
+      "features": [
+        "Diseño clásico con detalles dorados",
+        "Ajustable · talla pequeña",
+        "Para colección, decoración y fotos"
+      ]
+    }
+  ]
+}
