@@ -4,7 +4,7 @@ Versión revisada el 24 de noviembre de 2026: catálogo, fichas de producto, cat
 
 ## Probar la tienda
 
-Requiere Node.js 22 o posterior. No necesita instalar dependencias.
+Requiere Node.js 22 o posterior. Ejecutar `npm ci` antes de compilar o probar.
 
 ```sh
 npm run dev
@@ -56,7 +56,7 @@ Las opciones se configuran en `variants` (`id`, `label`, `price`, `units`, `imag
 - Retiro en la puerta del depósito en Asunción, coordinando ubicación y horario por WhatsApp.
 - Delivery: efectivo o transferencia al recibir, coordinando con el repartidor. Encomienda: pago antes del envío. Retiro: pago a coordinar.
 
-No hay cobros de tarjeta, registro de clientes, base de datos de pedidos ni panel administrativo en línea. La gestión inicial se hace por WhatsApp y con el editor local. Un clic hacia WhatsApp no acredita una compra ni un pago.
+No hay cobros de tarjeta, registro de clientes ni base de datos de pedidos. Un clic hacia WhatsApp no acredita una compra ni un pago. La ampliación de administración de inventario está preparada en esta rama; requiere activar la base de datos y las cuentas antes de usarla. Ver [activación del panel](docs/ADMIN.md).
 
 ## GitHub y Vercel
 

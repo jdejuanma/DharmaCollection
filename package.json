@@ -3,13 +3,23 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Dharma Collection — catálogo y pedidos por WhatsApp",
+  "description": "Dharma Collection \u2014 cat\u00e1logo y pedidos por WhatsApp",
   "scripts": {
     "build": "node scripts/build.mjs",
     "dev": "node scripts/preview.mjs",
     "start": "node scripts/preview.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check scripts/build.mjs && node --check src/app.mjs && node --check src/cart.mjs && node --check src/editor.mjs"
+    "check": "node --check scripts/build.mjs && node --check src/app.mjs && node --check src/cart.mjs && node --check src/editor.mjs && node --check api/index.mjs && node --check src/admin.mjs && node --check server/handler.mjs",
+    "admin:setup": "node --env-file=.env.local scripts/admin-setup.mjs"
   },
-  "engines": {"node": ">=22"}
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "better-auth": "^1.7.27",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.6.0"
+  }
 }
