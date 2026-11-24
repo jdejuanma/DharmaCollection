@@ -1,6 +1,6 @@
 # Dharma Collection
 
-Versión revisada el 6 de octubre de 2026: catálogo, fichas de producto, categorías, búsqueda, filtros, carrito y coordinación por WhatsApp. La estructura se adaptó del proyecto Fastysport con la identidad, el logo y las fotos de Dharma.
+Versión revisada el 24 de noviembre de 2026: catálogo, fichas de producto, categorías, búsqueda, filtros, carrito y coordinación por WhatsApp. La estructura se adaptó del proyecto Fastysport con la identidad, el logo y las fotos de Dharma.
 
 ## Probar la tienda
 
@@ -20,14 +20,16 @@ npm run build
 
 La carpeta `dist/` contiene el sitio generado. No se edita directamente. `node scripts/export-preview.mjs` crea una vista portátil en un único HTML, para revisar el diseño y probar el carrito sin un servidor. Los enlaces a WhatsApp y redes requieren internet.
 
-## Catálogo inicial
+## Catálogo actual
 
-| Producto | Precio | Stock inicial | Sin stock |
-| --- | ---: | ---: | --- |
-| Cinturón World Spinner | 399.000 Gs. | 1 | Consulta por encargo |
-| Cinturón Peso Pesado Championship | 399.000 Gs. de referencia | 0 | Consulta por encargo |
+| Producto | Precio | Disponibilidad |
+| --- | ---: | --- |
+| Cinturón World Spinner | 399.000 Gs. de referencia | Sobre pedido |
+| Cinturón Peso Pesado Championship | 399.000 Gs. de referencia | Sobre pedido |
+| Sable de luz multicolor — individual | 229.000 Gs. | A confirmar |
+| Sable de luz multicolor — combo de 2 | 449.000 Gs. | A confirmar |
 
-Ambos son talla pequeña, modelo único, categoría Cinturones WWE. Las cantidades se cargaron con los datos suministrados; deben revisarse antes de lanzar y después de cada venta. Un encargo requiere confirmar precio y plazo por WhatsApp. No hay descuentos automáticos.
+Son tres productos: el sable tiene una sola ficha con dos opciones, dos fotos y precios propios. Cada sable mide 74 cm. El combo contiene dos unidades que se pueden unir en doble hoja. Ambos cinturones son talla pequeña, modelo único. Los encargos requieren confirmar precio y plazo por WhatsApp.
 
 ## Añadir productos y actualizar stock
 
@@ -41,6 +43,10 @@ Ambos son talla pequeña, modelo único, categoría Cinturones WWE. Las cantidad
 Descargar los cambios antes de cerrar el editor. El editor no guarda automáticamente ni modifica un sitio publicado. Mantener estable el identificador de un producto existente para conservar sus enlaces. Las imágenes WebP que utiliza la tienda se guardan en `assets/products/`. Las dos fotografías PNG originales de alta resolución se conservan en el respaldo `Dharma_tienda_inicial.zip`; no son necesarias para compilar o publicar la tienda.
 
 El stock **se actualiza manualmente**: el carrito limita cantidades según el catálogo cargado, pero no reserva unidades ni descuenta existencias. Confirmar disponibilidad al responder cada consulta y publicar el stock nuevo después de una venta. Si un producto tiene stock 0, desaparece el botón para agregarlo al carrito y aparece la consulta de encargo/disponibilidad.
+
+Cuando no se conoce la cantidad, usar `stock: null` (campo vacío en el editor): se muestra **Disponibilidad a confirmar** y el carrito prepara una consulta, sin prometer existencias. Con stock numérico, cada combo consume dos unidades del mismo inventario que el sable individual.
+
+Las opciones se configuran en `variants` (`id`, `label`, `price`, `units`, `image`) y sus fotos en `gallery` (`image`, `alt`, `label`) dentro de `data/catalogo.json`. El precio base debe coincidir con la primera opción. El editor conserva esos campos; los precios de los combos y la galería se editan en el JSON. Los identificadores de opción también deben mantenerse estables. `sizeLabel` permite mostrar **Largo** en lugar de **Talla**.
 
 ## Compra, entregas y pagos
 
@@ -93,7 +99,7 @@ No hace falta reconstruir la tienda para cambiar productos, precios, fotos o dis
 - `src/cart.mjs` y `src/app.mjs`: carrito, filtros e interacción.
 - `src/editor.html` y `src/editor.mjs`: herramienta local de catálogo.
 - `scripts/build.mjs`: compilación estática y validación del catálogo.
-- `tests/cart.test.mjs`: integridad de cantidades, precios, datos y mensaje de WhatsApp.
+- `tests/cart.test.mjs` y `tests/variants.test.mjs`: cantidades, precios, variantes, disponibilidad y mensajes de WhatsApp.
 - `vercel.json`: construcción, rutas y cabeceras de seguridad.
 
 Antes de modificar el sitio, guardar una versión en Git. Ante un error de contenido, restaurar el catálogo anterior y volver a publicar. No almacenar contraseñas ni datos privados de clientes dentro del repositorio.

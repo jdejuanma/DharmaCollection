@@ -4,7 +4,7 @@
   "instagram": "https://www.instagram.com/dharmacollectionpy/",
   "facebook": "https://www.facebook.com/share/1KLBAbKqbX/",
   "siteUrl": "",
-  "updatedAt": "2026-10-06",
+  "updatedAt": "2026-11-24",
   "products": [
     {
       "id": "world-spinner",
@@ -14,7 +14,7 @@
       "price": 399000,
       "size": "Pequeña",
       "variant": "Modelo único",
-      "stock": 1,
+      "stock": 0,
       "onRequest": true,
       "image": "assets/products/world-spinner.webp",
       "imageAlt": "Cinturón World Spinner negro con placas doradas y plateadas sobre fondo blanco",
@@ -40,6 +40,56 @@
         "Diseño clásico con detalles dorados",
         "Ajustable · talla pequeña",
         "Para colección, decoración y fotos"
+      ]
+    },
+    {
+      "id": "sable-de-luz-multicolor",
+      "name": "Sable de luz multicolor",
+      "category": "Sables de luz",
+      "description": "Elegí tu lado de la Fuerza. Sable de luz estilo Star Wars de 74 cm, con más de 4 colores y empuñadura negra. Para disfraces, fotos, videos o un regalo fuera de lo común. Elegí uno individual o el combo de dos para formar un sable de doble hoja.",
+      "price": 229000,
+      "size": "74 cm por sable",
+      "sizeLabel": "Largo",
+      "variant": "Individual o combo de 2",
+      "stock": null,
+      "onRequest": false,
+      "image": "assets/products/sable-individual.webp",
+      "imageAlt": "Sable de luz encendido en verde, con empuñadura negra sobre fondo blanco",
+      "gallery": [
+        {
+          "image": "assets/products/sable-individual.webp",
+          "alt": "Sable individual encendido en verde",
+          "label": "Individual"
+        },
+        {
+          "image": "assets/products/sable-combo.webp",
+          "alt": "Dos sables unidos en una pieza de doble hoja, roja y violeta",
+          "label": "Combo de 2"
+        }
+      ],
+      "variants": [
+        {
+          "id": "individual",
+          "label": "1 sable",
+          "price": 229000,
+          "units": 1,
+          "image": "assets/products/sable-individual.webp"
+        },
+        {
+          "id": "combo-2",
+          "label": "Combo de 2 sables",
+          "price": 449000,
+          "units": 2,
+          "image": "assets/products/sable-combo.webp"
+        }
+      ],
+      "features": [
+        "74 cm de largo por sable",
+        "Más de 4 colores de iluminación",
+        "Empuñadura negra",
+        "Combo de 2: usalos por separado o unidos en doble hoja",
+        "Ideales para disfraces, fotos, videos y regalos",
+        "Envíos a todo Paraguay; costo a coordinar"
       ]
     }
   ]

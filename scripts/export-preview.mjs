@@ -15,7 +15,7 @@ async function dataUrl(file){
   }
   return embedded.get(file);
 }
-for(const p of store.products)p.image=await dataUrl(p.image);
+for(const p of store.products){p.image=await dataUrl(p.image);for(const entry of [...(p.gallery||[]),...(p.variants||[])])entry.image=await dataUrl(entry.image);}
 const destinations=store.products.map(p=>({url:`/productos/${p.id}`,body:productPage(p,store),title:p.name}));
 for(const type of ['envios-y-pagos','privacidad'])destinations.push({url:`/${type}`,body:policyPage(type,store),title:type==='privacidad'?'Privacidad':'Envíos y pagos'});
 const dialogs=destinations.map((d,i)=>`<dialog class="preview-modal" id="preview-${i}" aria-label="${d.title}"><button class="icon-btn" data-close-preview aria-label="Cerrar detalles">${icon('close')}</button>${d.body.replace(/<main\b/,'<section').replace('</main>','</section>').replace(' id="contenido"','')}</dialog>`).join('');

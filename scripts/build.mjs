@@ -11,9 +11,21 @@ export function validateCatalog(store){
   for(const p of store.products){
     if(!p||!/^[-a-z0-9]+$/.test(p.id)||ids.has(p.id))throw new Error('Cada producto necesita un ID único con letras minúsculas, números y guiones.');ids.add(p.id);
     for(const key of ['name','category','description','size','variant','image','imageAlt'])if(typeof p[key]!=='string'||!p[key].trim())throw new Error(`Falta ${key} en ${p.id}.`);
-    if(!Number.isSafeInteger(p.price)||p.price<1||!Number.isSafeInteger(p.stock)||p.stock<0||p.stock>100000||!Number.isSafeInteger(p.price*p.stock))throw new Error(`Precio o stock inválido en ${p.id}.`);
+    if(!Number.isSafeInteger(p.price)||p.price<1||(p.stock!==null&&(!Number.isSafeInteger(p.stock)||p.stock<0||p.stock>100000||!Number.isSafeInteger(p.price*p.stock))))throw new Error(`Precio o stock inválido en ${p.id}.`);
     if(typeof p.onRequest!=='boolean'||!Array.isArray(p.features)||p.features.some(f=>typeof f!=='string'))throw new Error(`Datos incompletos en ${p.id}.`);
-    if(!/^(assets\/[a-zA-Z0-9_./-]+\.(webp|png|jpe?g)|data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+)$/.test(p.image)||p.image.includes('..'))throw new Error(`La imagen de ${p.id} debe ser un archivo dentro de assets o una imagen PNG, JPG o WebP importada.`);
+    const validImage=image=>typeof image==='string'&&/^(assets\/[a-zA-Z0-9_./-]+\.(webp|png|jpe?g)|data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+)$/.test(image)&&!image.includes('..');
+    if(!validImage(p.image))throw new Error(`Imagen inválida en ${p.id}.`);
+    if(p.sizeLabel!==undefined&&(typeof p.sizeLabel!=='string'||!p.sizeLabel.trim()))throw new Error('Etiqueta de medida inválida.');
+    if(p.gallery!==undefined&&(!Array.isArray(p.gallery)||!p.gallery.length||p.gallery.some(g=>!g||!validImage(g.image)||typeof g.alt!=='string'||!g.alt.trim()||typeof g.label!=='string'||!g.label.trim())))throw new Error('Galería inválida.');
+    if(p.variants!==undefined){
+      if(!Array.isArray(p.variants)||!p.variants.length||!p.gallery)throw new Error('Opciones incompletas.');
+      const variantIds=new Set();
+      for(const v of p.variants){
+        if(!v||!/^[-a-z0-9]+$/.test(v.id)||variantIds.has(v.id)||typeof v.label!=='string'||!v.label.trim()||!Number.isSafeInteger(v.price)||v.price<1||!Number.isSafeInteger(v.price*100000)||!Number.isSafeInteger(v.units)||v.units<1||!validImage(v.image)||!p.gallery.some(g=>g.image===v.image))throw new Error('Opción inválida.');
+        variantIds.add(v.id);
+      }
+      if(p.price!==p.variants[0].price)throw new Error('El precio base debe coincidir con la primera opción.');
+    }
   }
   for(const key of ['instagram','facebook']){const u=new URL(store[key]);if(u.protocol!=='https:')throw new Error('Los enlaces sociales deben usar HTTPS.');}
   return store;
@@ -25,12 +37,13 @@ export async function build(){
   for(const p of store.products){
     if(p.image.startsWith('data:')){const match=p.image.match(/^data:image\/(png|jpeg|webp);base64,(.+)$/);const bytes=Buffer.from(match[2],'base64');if(bytes.length>10*1024*1024)throw new Error('La imagen supera 10 MB.');p.image=`assets/products/${p.id}.${match[1]==='jpeg'?'jpg':match[1]}`;await mkdir(path.join(dist,'assets/products'),{recursive:true});await writeFile(path.join(dist,p.image),bytes);}
     else await stat(path.join(dist,p.image));
+    for(const entry of [...(p.gallery||[]),...(p.variants||[])]){if(entry.image.startsWith('data:'))throw new Error('Usá archivos en assets para las fotos de galería y opciones.');await stat(path.join(dist,entry.image));}
   }
   let base=process.env.SITE_URL||store.siteUrl||(process.env.VERCEL_ENV==='production'&&process.env.VERCEL_PROJECT_PRODUCTION_URL?`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`:'');
   if(base){const u=new URL(base);if(u.protocol!=='https:'||u.pathname!=='/'||u.search||u.hash)throw new Error('SITE_URL debe ser un origen HTTPS sin ruta.');base=u.origin;}
   const noindex=process.env.VERCEL_ENV==='preview';
   const pages=[
-    {filename:'index.html',path:'/',title:'Dharma | Accesorios y coleccionables en Paraguay',description:'Encontrá tu próxima pieza en Dharma. Cinturones WWE, accesorios y coleccionables. Pedidos por WhatsApp, delivery y encomiendas a todo Paraguay.',body:home(store)},
+    {filename:'index.html',path:'/',title:'Dharma | Accesorios y coleccionables en Paraguay',description:'Encontrá tu próxima pieza en Dharma. Sables de luz, cinturones WWE, accesorios y coleccionables. Pedidos por WhatsApp, delivery y encomiendas a todo Paraguay.',body:home(store)},
     ...store.products.map(p=>({filename:`productos/${p.id}.html`,path:`/productos/${p.id}`,title:`${p.name} | Dharma Paraguay`,description:p.description,body:productPage(p,store),product:p})),
     ...['envios-y-pagos','privacidad'].map(type=>({filename:`${type}.html`,path:`/${type}`,title:`${type==='privacidad'?'Privacidad':'Envíos y pagos'} | Dharma`,description:type==='privacidad'?'Conocé cómo se utiliza la información de tu pedido en Dharma.':'Delivery, encomienda, retiro y formas de pago en Dharma Collection, Paraguay.',body:policyPage(type,store)})),
     {filename:'404.html',path:'/404',title:'Página no encontrada | Dharma',description:'Volvé a la colección de Dharma.',body:'<main class="policy-page container" id="contenido"><span class="section-tag">404</span><h1 class="section-title">Esta pieza se nos escapó.</h1><p>La página que buscás no está disponible.</p><a class="btn btn--primary" href="/#productos">Volver a la colección</a></main>',noindex:true}

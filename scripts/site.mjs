@@ -1,4 +1,4 @@
-import {formatPrice, buildRequestMessage, whatsappUrl} from '../src/cart.mjs';
+import {canOrder,sizeText,formatPrice, buildRequestMessage, whatsappUrl} from '../src/cart.mjs';
 
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const json = value => JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -19,9 +19,10 @@ const paths = {
 export const icon = (name,cls='') => `<svg class="icon ${cls}" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.arrow}</svg>`;
 export const generalWa = store => whatsappUrl(store.whatsapp, 'Hola Dharma, quisiera hacer una consulta sobre sus productos.');
 export const productUrl = p => `/productos/${p.id}`;
-const status = p => p.stock > 0 ? `${p.stock} ${p.stock===1?'unidad disponible':'unidades disponibles'}` : p.onRequest ? 'Sobre pedido' : 'Agotado';
+const status = p => p.stock === null ? 'Disponibilidad a confirmar' : p.stock > 0 ? `${p.stock} ${p.stock===1?'unidad disponible':'unidades disponibles'}` : p.onRequest ? 'Sobre pedido' : 'Agotado';
 export function action(p,store,large=false) {
-  if(p.stock>0) return `<button class="btn btn--primary ${large?'btn--full':''}" data-add="${esc(p.id)}">${icon('bag')} Agregar al carrito</button>`;
+  if(p.variants?.length&&!large) return `<a class="btn btn--primary" href="${productUrl(p)}">Elegir opción ${icon('arrow')}</a>`;
+  if(canOrder(p)) return `<button class="btn btn--primary ${large?'btn--full':''}" data-add="${esc(p.id)}" data-variant="${esc(p.variants?.[0]?.id||'')}">${icon('bag')} Agregar al carrito</button>`;
   return `<a class="btn btn--outline ${large?'btn--full':''}" href="${esc(whatsappUrl(store.whatsapp,buildRequestMessage(p)))}" target="_blank" rel="noopener noreferrer">${icon('chat')} ${p.onRequest?'Consultar encargo':'Consultar disponibilidad'}</a>`;
 }
 export function productCard(p,store) {
@@ -33,9 +34,9 @@ export function productCard(p,store) {
     </a>
     <div class="product-card__body"><p class="eyebrow">${esc(p.category)}</p>
       <h3><a href="${productUrl(p)}">${esc(p.name)}</a></h3><p class="product-card__desc">${esc(p.description)}</p>
-      <div class="product-card__meta"><span>Talla ${esc(p.size.toLowerCase())}</span><span>${esc(p.variant)}</span></div>
-      <div class="product-card__footer"><div><span class="product-card__price">${formatPrice(p.price)}</span><small>${p.stock?'Envío a cotizar':'Precio de referencia'}</small></div>${action(p,store)}</div>
-      ${p.stock?'':'<p class="request-note">Confirmamos precio final y plazo por WhatsApp.</p>'}
+      <div class="product-card__meta"><span>${esc(sizeText(p))}</span><span>${esc(p.variant)}</span></div>
+      <div class="product-card__footer"><div><span class="product-card__price">${p.variants?.length?'Desde ':''}${formatPrice(p.price)}</span><small>${canOrder(p)?'Envío a cotizar':'Precio de referencia'}</small></div>${action(p,store)}</div>
+      ${p.variants?.length>1?`<p class="request-note">Combo de 2: ${formatPrice(p.variants[1].price)} · Se unen en doble hoja.</p>`:p.stock?'':'<p class="request-note">Confirmamos precio final y plazo por WhatsApp.</p>'}
     </div></article>`;
 }
 export function header() { return `<a class="skip-link" href="#contenido">Ir al contenido</a><div class="announcement">Piezas fuera de lo común. <span>Envíos a todo Paraguay.</span></div>
@@ -63,7 +64,7 @@ export function home(store) {
   ['gift','Un regalo diferente','Coleccionables para fans, para tu espacio o para alguien especial.']
   ].map(([i,h,p])=>`<div class="feature"><div class="feature__icon">${icon(i)}</div><h2>${h}</h2><p>${p}</p></div>`).join('')}</div></section>
   <section class="products" id="productos"><div class="container"><div class="section-header"><div><span class="section-tag">La colección</span><h2 class="section-title">Encontrá tu próxima pieza.</h2><p class="section-desc">Diseños que se llevan todas las miradas. Elegí el tuyo.</p></div><span class="collection-count">${products.length.toString().padStart(2,'0')} / PRODUCTOS</span></div>
-  <div class="catalog-toolbar"><div class="products__filters" role="group" aria-label="Filtrar por disponibilidad"><button class="filter-btn active" data-filter="all" aria-pressed="true">Todos</button><button class="filter-btn" data-filter="stock" aria-pressed="false">En stock</button><button class="filter-btn" data-filter="request" aria-pressed="false">Sobre pedido</button></div><div class="catalog-search"><label class="search-field">${icon('search')}<input id="search" type="search" placeholder="Buscar una pieza" aria-label="Buscar productos"></label><label class="sr-only" for="category">Categoría</label><select id="category"><option value="all">Todas las categorías</option>${categories.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div></div>
+  <div class="catalog-toolbar"><div class="products__filters" role="group" aria-label="Filtrar por disponibilidad"><button class="filter-btn active" data-filter="all" aria-pressed="true">Todos</button><button class="filter-btn" data-filter="stock" aria-pressed="false">En stock</button>${products.some(p=>p.stock===null)?'<button class="filter-btn" data-filter="confirm" aria-pressed="false">A confirmar</button>':''}<button class="filter-btn" data-filter="request" aria-pressed="false">Sobre pedido</button></div><div class="catalog-search"><label class="search-field">${icon('search')}<input id="search" type="search" placeholder="Buscar una pieza" aria-label="Buscar productos"></label><label class="sr-only" for="category">Categoría</label><select id="category"><option value="all">Todas las categorías</option>${categories.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div></div>
   <div class="products__grid" id="productsGrid">${products.map(p=>productCard(p,store)).join('')}</div><p id="noResults" class="empty-search" hidden>No encontramos piezas con esos filtros. <button class="text-btn" id="resetFilters">Ver toda la colección</button></p><p class="stock-note">${icon('chat')} ¿Buscás más unidades o un modelo sin stock? <a href="${esc(generalWa(store))}" target="_blank" rel="noopener noreferrer">Consultanos por encargo.</a></p></div></section>
   <section class="about" id="nosotros"><div class="container about__inner"><div class="about__content"><span class="section-tag">El mundo Dharma</span><h2 class="section-title">Tu pasión merece<br>su propio lugar.</h2><p>Hay piezas que no pasan desapercibidas. Las elegís porque te recuerdan algo, porque son parte de lo que te gusta o porque completan ese rincón tan tuyo.</p><p>En Dharma reunimos accesorios y coleccionables para que encuentres esa próxima pieza. Somos de Paraguay y te acompañamos de la primera consulta a la entrega.</p><a href="${esc(store.instagram)}" class="btn btn--light" target="_blank" rel="noopener noreferrer">Seguinos en Instagram ${icon('instagram')}</a></div><div class="about__visual"><div class="about__card"><img class="about__brand" src="/assets/brand/logo.webp" width="868" height="187" alt="Dharma" loading="lazy"><div class="about__line"></div><span>COLECCIONÁ LO QUE TE MUEVE.</span></div></div></div></section>
   <section class="how"><div class="container"><div class="section-header"><div><span class="section-tag">Simple, de principio a fin</span><h2 class="section-title">Tu próxima pieza, en tres pasos.</h2></div></div><div class="steps">${[
@@ -75,7 +76,31 @@ export function home(store) {
 }
 
 export function productPage(p,store) {
-  return `<main id="contenido" class="detail-page"><div class="container"><nav class="breadcrumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a><span>/</span><a href="/#productos">Colección</a><span>/</span><span>${esc(p.name)}</span></nav><div class="product-detail"><div class="detail-image"><img src="/${esc(p.image)}" width="960" height="960" alt="${esc(p.imageAlt)}" fetchpriority="high"></div><div class="detail-info"><span class="section-tag">${esc(p.category)}</span><h1>${esc(p.name)}</h1><span class="stock-pill ${p.stock?'':'stock-pill--request'}">${status(p)}</span><p class="detail-description">${esc(p.description)}</p><p class="detail-price">${formatPrice(p.price)}</p><p class="small-muted">${p.stock?'Envío a cotizar por WhatsApp.':'Precio de referencia. Precio final y plazo a confirmar por encargo.'}</p><dl class="specs"><div><dt>Talla</dt><dd>${esc(p.size)}</dd></div><div><dt>Variante</dt><dd>${esc(p.variant)}</dd></div></dl>${action(p,store,true)}<p class="small-muted">${p.stock?'Disponibilidad sujeta a confirmación. El carrito no reserva unidades.':'Actualmente sin stock para entrega inmediata.'}</p><ul class="detail-features">${p.features.map(f=>`<li>${icon('check')}${esc(f)}</li>`).join('')}</ul><a class="text-link" href="/envios-y-pagos">Ver envíos y formas de pago ${icon('arrow')}</a></div></div><section class="related"><span class="section-tag">Seguí explorando</span><h2 class="section-title">También en la colección</h2><div class="products__grid">${store.products.filter(x=>x.id!==p.id).slice(0,2).map(x=>productCard(x,store)).join('')}</div></section></div></main>`;
+  const gallery=p.gallery||[{image:p.image,alt:p.imageAlt,label:p.name}];
+  const src=image=>image.startsWith('data:')?image:'/'+image;
+  return `<main id="contenido" class="detail-page"><div class="container">
+    <nav class="breadcrumbs" aria-label="Ruta de navegación"><a href="/">Inicio</a><span>/</span><a href="/#productos">Colección</a><span>/</span><span>${esc(p.name)}</span></nav>
+    <div class="product-detail" data-detail-product="${esc(p.id)}">
+      <div class="product-gallery">
+        <div class="detail-image ${p.gallery?'detail-image--gallery':''}"><img data-gallery-image src="${esc(src(gallery[0].image))}" width="960" height="960" alt="${esc(gallery[0].alt)}" fetchpriority="high"></div>
+        ${gallery.length>1?`<div class="gallery-thumbs" role="group" aria-label="Fotos del producto">${gallery.map((g,i)=>`<button type="button" data-gallery-index="${i}" aria-pressed="${i===0}" aria-label="Ver foto: ${esc(g.label)}"><img src="${esc(src(g.image))}" alt="" width="80" height="90"><span>${esc(g.label)}</span></button>`).join('')}</div><p class="gallery-caption" data-gallery-caption aria-live="polite">${esc(gallery[0].label)}</p>`:''}
+      </div>
+      <div class="detail-info"><span class="section-tag">${esc(p.category)}</span><h1>${esc(p.name)}</h1>
+        <span class="stock-pill ${p.stock?'':'stock-pill--request'}">${status(p)}</span>
+        <p class="detail-description">${esc(p.description)}</p>
+        ${p.variants?.length?`<fieldset class="product-options"><legend>Elegí tu opción</legend>${p.variants.map((v,i)=>`<label class="product-option"><input type="radio" name="option-${esc(p.id)}" data-option value="${esc(v.id)}" ${i===0?'checked':''}><span><strong>${esc(v.label)}</strong><small>${formatPrice(v.price)}</small></span></label>`).join('')}</fieldset>`:''}
+        <p class="detail-price" data-detail-price aria-live="polite">${formatPrice(p.price)}</p>
+        ${p.variants?.length?'<p class="option-note" data-option-note>Incluye 1 sable de 74 cm. Más de 4 colores de iluminación.</p>':''}
+        <p class="small-muted">${canOrder(p)?'Envío a cotizar por WhatsApp.':'Precio de referencia. Precio final y plazo a confirmar por encargo.'}</p>
+        <dl class="specs"><div><dt>${esc(p.sizeLabel||'Talla')}</dt><dd>${esc(p.size)}</dd></div><div><dt>Presentación</dt><dd>${esc(p.variant)}</dd></div></dl>
+        ${action(p,store,true)}
+        <p class="small-muted">${canOrder(p)?'Disponibilidad sujeta a confirmación. El carrito no reserva unidades.':'Actualmente sin stock para entrega inmediata.'}</p>
+        <ul class="detail-features">${p.features.map(f=>`<li>${icon('check')}${esc(f)}</li>`).join('')}</ul>
+        <a class="text-link" href="/envios-y-pagos">Ver envíos y formas de pago ${icon('arrow')}</a>
+      </div>
+    </div>
+    <section class="related"><span class="section-tag">Seguí explorando</span><h2 class="section-title">También en la colección</h2><div class="products__grid">${store.products.filter(x=>x.id!==p.id).slice(0,2).map(x=>productCard(x,store)).join('')}</div></section>
+  </div></main>`;
 }
 export function policyPage(type,store) {
   const privacy=type==='privacidad';
