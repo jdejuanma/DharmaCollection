@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {randomBytes} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
+import {PGlite} from '@electric-sql/pglite';
+import {getMigrations} from 'better-auth/db/migration';
+import {createAuth} from '../server/auth.mjs';
+import {inventoryRepository,validateChange} from '../server/inventory.mjs';
+import {createHandler} from '../server/handler.mjs';
+import catalog from '../data/catalogo.json' with {type:'json'};
+const origin='http://localhost:4173';
+const request=(route,method='GET',body,headers={})=>new Request(origin+route,{method,headers:{...(body?{'Content-Type':'application/json',Origin:origin}:{}),...headers},body:body?JSON.stringify(body):undefined});
+test('administración: autenticación real, permisos, CSRF, inventario persistido e historial',async()=>{
+ const sqlite=new DatabaseSync(':memory:');const pg=new PGlite();
+ try{
+  const secret=randomBytes(48).toString('hex');
+  const auth=createAuth({database:sqlite,origin,secret});await (await getMigrations(auth.options)).runMigrations();
+  const provision=createAuth({database:sqlite,origin,secret,allowProvisioning:true});
+  const password=randomBytes(18).toString('hex');
+  const admin=await provision.api.signUpEmail({body:{email:'admin@example.test',password,name:'Equipo'}});
+  const member=await provision.api.signUpEmail({body:{email:'visitor@example.test',password,name:'Visitante'}});
+  await pg.exec('CREATE TABLE "user"(id TEXT PRIMARY KEY)');
+  await pg.exec(await readFile(new URL('../server/schema.sql',import.meta.url),'utf8'));
+  await pg.query('INSERT INTO "user"(id) VALUES($1)',[admin.user.id]);
+  await pg.query('INSERT INTO admin_members(user_id) VALUES($1)',[admin.user.id]);
+  for(const p of catalog.products)await pg.query('INSERT INTO inventory(product_id,stock,on_request) VALUES($1,$2,$3)',[p.id,p.stock,p.onRequest]);
+  const inventory=inventoryRepository(pg),handle=createHandler(()=>({auth,inventory,origin}));
+  assert.equal((await handle(request('/api/admin/inventory'))).status,401);
+  assert.equal((await handle(request('/api/auth/sign-up/email','POST',{email:'bad@example.test',password,name:'Bad'}))).status,404);
+  const blockedSignup=await auth.handler(request('/api/auth/sign-up/email','POST',{email:'bad@example.test',password,name:'Bad'}));assert.equal(blockedSignup.status,400);assert.match(JSON.stringify(await blockedSignup.json()),/SIGN_UP_DISABLED/);
+  async function signIn(email){const response=await handle(request('/api/auth/sign-in/email','POST',{email,password}));assert.equal(response.status,200);return response.headers.getSetCookie().map(c=>c.split(';')[0]).join('; ');}
+  const visitorCookie=await signIn(member.user.email);
+  assert.equal((await handle(request('/api/admin/inventory','GET',null,{Cookie:visitorCookie}))).status,403);
+  const cookie=await signIn(admin.user.email);
+  assert.match(cookie,/dharma-admin\.session_token/);
+  const before=await (await handle(request('/api/admin/inventory','GET',null,{Cookie:cookie}))).json();
+  assert.equal(before.inventory.find(p=>p.id==='sable-de-luz-multicolor').stock,6);
+  const change={id:'sable-de-luz-multicolor',stock:4,onRequest:false,version:0,reason:'venta'};
+  assert.equal((await handle(request('/api/admin/inventory','PATCH',change,{Cookie:cookie,Origin:'https://malicious.test'}))).status,403);
+  assert.equal((await handle(request('/api/admin/inventory','PATCH',{...change,stock:-1},{Cookie:cookie}))).status,400);
+  assert.equal((await handle(request('/api/admin/inventory','PATCH',change,{Cookie:cookie}))).status,200);
+  assert.equal((await handle(request('/api/admin/inventory','PATCH',change,{Cookie:cookie}))).status,409);
+  const after=await (await handle(request('/api/admin/inventory','GET',null,{Cookie:cookie}))).json();
+  assert.equal(after.inventory.find(p=>p.id===change.id).stock,4);assert.equal(after.history.length,1);
+  assert.equal(after.history[0].oldStock,6);assert.equal(after.history[0].newStock,4);assert.equal(after.history[0].actorName,'Equipo');
+  const published=await handle(request('/productos/sable-de-luz-multicolor'));
+  assert.equal(published.headers.get('cache-control'),'no-store');assert.match(await published.text(),/4 unidades disponibles/);
+  const failedStore=createHandler(()=>({auth,origin,inventory:{list:async()=>{throw Error('DB down');}}}));
+  const fallback=await (await failedStore(request('/productos/sable-de-luz-multicolor'))).text();assert.match(fallback,/Disponibilidad a confirmar/);assert.doesNotMatch(fallback,/6 unidades disponibles/);
+  await handle(request('/api/auth/sign-out','POST',{},{Cookie:cookie}));assert.equal((await handle(request('/api/admin/inventory','GET',null,{Cookie:cookie}))).status,401);
+  const limits=[];for(let i=0;i<6;i++)limits.push((await handle(request('/api/auth/sign-in/email','POST',{email:admin.user.email,password:'incorrect-password'}))).status);
+  assert.ok(limits.includes(429),'los intentos repetidos deben limitarse con estado persistido');
+ }finally{sqlite.close();await pg.close();}
+});
+test('sin configurar credenciales, el panel no acepta escrituras',async()=>{
+ const handler=createHandler(()=>null);
+ assert.equal((await handler(request('/api/admin/inventory','PATCH',{stock:6}))).status,503);
+ const response=await handler(request('/'));assert.equal(response.status,200);
+ assert.throws(()=>validateChange({id:'sable-de-luz-multicolor',stock:2.5,onRequest:false,version:0,reason:'venta'},catalog.products));
+});

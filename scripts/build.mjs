@@ -49,9 +49,9 @@ export async function build(){
     {filename:'404.html',path:'/404',title:'Página no encontrada | Dharma',description:'Volvé a la colección de Dharma.',body:'<main class="policy-page container" id="contenido"><span class="section-tag">404</span><h1 class="section-title">Esta pieza se nos escapó.</h1><p>La página que buscás no está disponible.</p><a class="btn btn--primary" href="/#productos">Volver a la colección</a></main>',noindex:true}
   ];
   for(const p of pages){const target=path.join(dist,p.filename);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,page({...p,store,base,noindex:p.noindex||noindex}));}
-  for(const file of ['styles.css','app.mjs','cart.mjs'])await cp(path.join(root,'src',file),path.join(dist,file));
+  for(const file of ['styles.css','app.mjs','cart.mjs','admin.html','admin.css','admin.mjs'])await cp(path.join(root,'src',file),path.join(dist,file));
   await writeFile(path.join(dist,'catalogo.json'),JSON.stringify(store,null,2)+'\n');
-  await writeFile(path.join(dist,'robots.txt'),noindex?'User-agent: *\nDisallow: /\n':`User-agent: *\nAllow: /\n${base?`Sitemap: ${base}/sitemap.xml\n`:''}`);
+  await writeFile(path.join(dist,'robots.txt'),noindex?'User-agent: *\nDisallow: /\n':`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n${base?`Sitemap: ${base}/sitemap.xml\n`:''}`);
   if(base)await writeFile(path.join(dist,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages.filter(p=>p.filename!=='404.html').map(p=>`<url><loc>${esc(base+p.path)}</loc></url>`).join('')}</urlset>`);
   const editorTemplate=await readFile(path.join(root,'src/editor.html'),'utf8');const editorScript=await readFile(path.join(root,'src/editor.mjs'),'utf8');
   await mkdir(path.join(root,'herramientas'),{recursive:true});await writeFile(path.join(root,'herramientas/editor-catalogo.html'),editorTemplate.replace('/*CATALOG_DATA*/',json(original)).replace('/*EDITOR_SCRIPT*/',editorScript));
