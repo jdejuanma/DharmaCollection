@@ -30,10 +30,10 @@ test('unidades individuales y combos comparten el stock físico cuando se carga'
  assert.deepEqual(normalizeCart(cart,[{...saber,stock:0}]),[]);
 });
 test('sin cantidad confirmada no se inventa stock y se acotan cantidades de consulta',()=>{
- assert.equal(saber.stock,null);const cart=normalizeCart([selection('combo-2',1000)],catalog.products);
+ const unknown={...saber,stock:null};const cart=normalizeCart([selection('combo-2',1000)],[unknown]);
  assert.equal(cart[0].qty,99);assert.equal(canIncrease(cart[0],cart),false);
- assert.match(productCard(saber,catalog),/Disponibilidad a confirmar/);
- assert.doesNotMatch(productCard(saber,catalog),/\d+ unidades disponibles/);
+ assert.match(productCard(unknown,catalog),/Disponibilidad a confirmar/);
+ assert.doesNotMatch(productCard(unknown,catalog),/\d+ unidades disponibles/);
 });
 test('World Spinner agotado se retira del carrito antiguo y permite encargo',()=>{
  const spinner=catalog.products.find(p=>p.id==='world-spinner');assert.equal(spinner.stock,0);assert.equal(spinner.onRequest,true);

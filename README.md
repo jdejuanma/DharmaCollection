@@ -26,8 +26,8 @@ La carpeta `dist/` contiene el sitio generado. No se edita directamente. `node s
 | --- | ---: | --- |
 | Cinturón World Spinner | 399.000 Gs. de referencia | Sobre pedido |
 | Cinturón Peso Pesado Championship | 399.000 Gs. de referencia | Sobre pedido |
-| Sable de luz multicolor — individual | 229.000 Gs. | A confirmar |
-| Sable de luz multicolor — combo de 2 | 449.000 Gs. | A confirmar |
+| Sable de luz multicolor — individual | 229.000 Gs. | 6 unidades compartidas |
+| Sable de luz multicolor — combo de 2 | 449.000 Gs. | Hasta 3 combos del mismo stock |
 
 Son tres productos: el sable tiene una sola ficha con dos opciones, dos fotos y precios propios. Cada sable mide 74 cm. El combo contiene dos unidades que se pueden unir en doble hoja. Ambos cinturones son talla pequeña, modelo único. Los encargos requieren confirmar precio y plazo por WhatsApp.
 

@@ -51,7 +51,7 @@
       "size": "74 cm por sable",
       "sizeLabel": "Largo",
       "variant": "Individual o combo de 2",
-      "stock": null,
+      "stock": 6,
       "onRequest": false,
       "image": "assets/products/sable-individual.webp",
       "imageAlt": "Sable de luz encendido en verde, con empuñadura negra sobre fondo blanco",
